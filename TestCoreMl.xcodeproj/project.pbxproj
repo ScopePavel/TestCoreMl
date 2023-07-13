@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		CD3795E62A6054420050DB64 /* ViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD3795E52A6054420050DB64 /* ViewModel.swift */; };
 		CDB9C4AC2A1F706A00527DF7 /* Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDB9C4AB2A1F706A00527DF7 /* Extensions.swift */; };
 		CDB9C4AF2A1FD5D600527DF7 /* MLManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDB9C4AE2A1FD5D600527DF7 /* MLManager.swift */; };
 		CDB9C4B12A1FDD7000527DF7 /* VideoWriter.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDB9C4B02A1FDD7000527DF7 /* VideoWriter.swift */; };
@@ -22,6 +23,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		CD3795E52A6054420050DB64 /* ViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewModel.swift; sourceTree = "<group>"; };
 		CDB9C4AB2A1F706A00527DF7 /* Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Extensions.swift; sourceTree = "<group>"; };
 		CDB9C4AE2A1FD5D600527DF7 /* MLManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MLManager.swift; sourceTree = "<group>"; };
 		CDB9C4B02A1FDD7000527DF7 /* VideoWriter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoWriter.swift; sourceTree = "<group>"; };
@@ -49,6 +51,14 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		CD3795E42A6054320050DB64 /* Main */ = {
+			isa = PBXGroup;
+			children = (
+				CD3795E52A6054420050DB64 /* ViewModel.swift */,
+			);
+			path = Main;
+			sourceTree = "<group>";
+		};
 		CDCE5BEB29DF37E90098CD2E = {
 			isa = PBXGroup;
 			children = (
@@ -68,6 +78,7 @@
 		CDCE5BF629DF37E90098CD2E /* TestCoreMl */ = {
 			isa = PBXGroup;
 			children = (
+				CD3795E42A6054320050DB64 /* Main */,
 				CDB9C4B52A1FFC1200527DF7 /* music.aac */,
 				CDCE5BF729DF37E90098CD2E /* AppDelegate.swift */,
 				CDCE5BF929DF37E90098CD2E /* SceneDelegate.swift */,
@@ -158,6 +169,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				CDB9C4B12A1FDD7000527DF7 /* VideoWriter.swift in Sources */,
+				CD3795E62A6054420050DB64 /* ViewModel.swift in Sources */,
 				CDCE5BFC29DF37E90098CD2E /* ViewController.swift in Sources */,
 				CDB9C4AF2A1FD5D600527DF7 /* MLManager.swift in Sources */,
 				CDB9C4AC2A1F706A00527DF7 /* Extensions.swift in Sources */,
