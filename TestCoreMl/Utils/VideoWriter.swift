@@ -6,12 +6,12 @@ typealias MovieMakerCompletion = (URL) -> Void
 typealias MovieMakerUIImageExtractor = (AnyObject) -> UIImage?
 
 class VideoWriter: NSObject {
-    private var assetWriter: AVAssetWriter!
-    private var writeInput: AVAssetWriterInput!
-    private var bufferAdapter: AVAssetWriterInputPixelBufferAdaptor!
-    private var videoSettings: [String: Any]!
-    private var frameTime: CMTime!
-    private var fileURL: URL!
+    private var assetWriter: AVAssetWriter?
+    private var writeInput: AVAssetWriterInput?
+    private var bufferAdapter: AVAssetWriterInputPixelBufferAdaptor?
+    private var videoSettings: [String: Any]?
+    private var frameTime: CMTime?
+    private var fileURL: URL?
 
     private var completionBlock: MovieMakerCompletion?
     private var movieMakerUIImageExtractor: MovieMakerUIImageExtractor?
@@ -32,7 +32,6 @@ class VideoWriter: NSObject {
 
     init(videoSettings: [String: Any]) {
         super.init()
-
         let paths = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true)
         let tempPath = paths[0] + "/exprotvideo.mp4"
 
@@ -43,31 +42,36 @@ class VideoWriter: NSObject {
             }
         }
 
-        self.fileURL = URL(fileURLWithPath: tempPath)
-        self.assetWriter = try! AVAssetWriter(url: self.fileURL, fileType: AVFileType.mov)
+        let fileURL = URL(fileURLWithPath: tempPath)
+        self.assetWriter = try? AVAssetWriter(url: fileURL, fileType: AVFileType.mov)
 
         self.videoSettings = videoSettings
-        self.writeInput = AVAssetWriterInput(mediaType: AVMediaType.video, outputSettings: videoSettings)
-        assert(self.assetWriter.canAdd(self.writeInput), "add failed")
+        let writeInput = AVAssetWriterInput(mediaType: AVMediaType.video, outputSettings: videoSettings)
 
-        self.assetWriter.add(self.writeInput)
+        assert(self.assetWriter?.canAdd(writeInput) ?? false, "add failed")
+        self.assetWriter?.add(writeInput)
+
         let bufferAttributes = [kCVPixelBufferPixelFormatTypeKey as String: Int(kCVPixelFormatType_32ARGB)]
         self.bufferAdapter = AVAssetWriterInputPixelBufferAdaptor(
-            assetWriterInput: self.writeInput,
+            assetWriterInput: writeInput,
             sourcePixelBufferAttributes: bufferAttributes
         )
         self.frameTime = CMTimeMake(value: 4, timescale: 1)
+        self.writeInput = writeInput
+        self.fileURL = fileURL
     }
 
     func createMovieFrom(images: [UIImage], withCompletion: @escaping MovieMakerCompletion) {
         self.createMovieFromSource(
             images: images,
             extractor: {(inputObject: AnyObject) -> UIImage? in
-            return inputObject as? UIImage}, withCompletion: withCompletion
+                return inputObject as? UIImage}, withCompletion: withCompletion
         )
     }
 }
+
 private extension VideoWriter {
+
     private func mergeVideoAndAudio(
         videoUrl: URL,
         audioUrl: URL,
@@ -191,14 +195,16 @@ private extension VideoWriter {
 
     }
 
-    func newPixelBufferFrom(cgImage: CGImage) -> CVPixelBuffer?{
+    func newPixelBufferFrom(cgImage: CGImage) -> CVPixelBuffer? {
         let options: [String: Any] = [
             kCVPixelBufferCGImageCompatibilityKey as String: true,
             kCVPixelBufferCGBitmapContextCompatibilityKey as String: true
         ]
         var pxbuffer: CVPixelBuffer?
-        let frameWidth = self.videoSettings[AVVideoWidthKey] as! Int
-        let frameHeight = self.videoSettings[AVVideoHeightKey] as! Int
+        guard
+            let frameWidth = self.videoSettings?[AVVideoWidthKey] as? Int,
+            let frameHeight = self.videoSettings![AVVideoHeightKey] as? Int
+        else { return nil }
 
         let status = CVPixelBufferCreate(
             kCFAllocatorDefault, frameWidth,
@@ -244,53 +250,61 @@ private extension VideoWriter {
     ) {
         self.completionBlock = withCompletion
 
-        self.assetWriter.startWriting()
-        self.assetWriter.startSession(atSourceTime: CMTime.zero)
+        self.assetWriter?.startWriting()
+        self.assetWriter?.startSession(atSourceTime: CMTime.zero)
 
         let mediaInputQueue = DispatchQueue(label: "mediaInputQueue")
         var i = 0
         let frameNumber = images.count
-        self.writeInput.requestMediaDataWhenReady(on: mediaInputQueue) {
+        self.writeInput?.requestMediaDataWhenReady(on: mediaInputQueue) {
             while true {
                 if i >= frameNumber {
                     break
                 }
 
-                if self.writeInput.isReadyForMoreMediaData {
+                if let isReadyForMoreMediaData = self.writeInput?.isReadyForMoreMediaData,
+                   isReadyForMoreMediaData
+                {
                     var sampleBuffer: CVPixelBuffer?
                     autoreleasepool{
                         let img = extractor(images[i])
                         if img == nil{
                             i += 1
                             print("Warning: counld not extract one of the frames")
-                            //                            continue
+                            // continue
                         }
                         sampleBuffer = self.newPixelBufferFrom(cgImage: img!.cgImage!)
                     }
-                    if sampleBuffer != nil {
+                    if let sampleBuffer = sampleBuffer {
                         if i == 0 {
-                            self.bufferAdapter.append(sampleBuffer!, withPresentationTime: CMTime.zero)
-                        }else{
-                            let value = i - 1
-                            let lastTime = CMTimeMake(value: Int64(value), timescale: self.frameTime.timescale)
-                            let presentTime = CMTimeAdd(lastTime, self.frameTime)
-                            self.bufferAdapter.append(sampleBuffer!, withPresentationTime: presentTime)
+                            self.bufferAdapter?.append(sampleBuffer, withPresentationTime: CMTime.zero)
+                        } else {
+                            if let frameTime = self.frameTime {
+                                let value = i - 1
+                                let lastTime = CMTimeMake(value: Int64(value), timescale: frameTime.timescale)
+                                let presentTime = CMTimeAdd(lastTime, frameTime)
+                                self.bufferAdapter?.append(sampleBuffer, withPresentationTime: presentTime)
+                            }
                         }
                         i = i + 1
                     }
                 }
             }
-            self.writeInput.markAsFinished()
-            self.assetWriter.finishWriting {
+            self.writeInput?.markAsFinished()
+            self.assetWriter?.finishWriting {
                 DispatchQueue.main.sync {
-                    let url = Bundle.main.url(forResource: "music", withExtension: "aac")!
-                    self.mergeVideoAndAudio(videoUrl: self.fileURL, audioUrl: url) { error, url in
-                        if let url = url {
-                            self.completionBlock!(url)
+                    if let url = Bundle.main.url(forResource: "music", withExtension: "aac"),
+                       let fileURL = self.fileURL
+                    {
+                        self.mergeVideoAndAudio(videoUrl: fileURL, audioUrl: url) { error, url in
+                            if let url = url {
+                                self.completionBlock!(url)
+                            }
                         }
                     }
                 }
             }
+
         }
     }
 }

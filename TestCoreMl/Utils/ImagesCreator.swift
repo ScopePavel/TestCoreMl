@@ -66,10 +66,11 @@ private extension ImagesCreator {
                 images.append(model.originalImage)
             }
             if index != 0 {
-                if let newImage = createNewImage(image: model.originalImage,
-                                                 mask: model.mask,
-                                                 background: imageModels[safe: index - 1]?.originalImage)
-                {
+                if let newImage = createNewImage(
+                    image: model.originalImage,
+                    mask: model.mask,
+                    background: imageModels[safe: index - 1]?.originalImage
+                ) {
                     images.append(newImage)
                     images.append(model.originalImage)
                 } else {
