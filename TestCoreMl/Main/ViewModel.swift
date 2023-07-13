@@ -42,20 +42,7 @@ private extension MainViewModel {
             height: (uiImages[0].cgImage?.height)!)
         let movieMaker = VideoWriter(videoSettings: settings)
         movieMaker.createMovieFrom(images: uiImages) { [weak self] fileURL in
-//            let video = AVAsset(url: fileURL)
             self?.onShow?(fileURL)
-//            let playerItem = AVPlayerItem(asset: video)
-//            let avPlayer = AVPlayer(playerItem: playerItem)
-//            let playerLayer = AVPlayerLayer(player: avPlayer)
-//            playerLayer.frame = CGRect(
-//                x: 0,
-//                y: 0,
-//                width: UIScreen.main.bounds.width,
-//                height: UIScreen.main.bounds.width * 3.0 / 4.0
-//            )
-//            //            self.view.layer.addSublayer(playerLayer)
-//            //            avPlayer.play()
         }
     }
-
 }

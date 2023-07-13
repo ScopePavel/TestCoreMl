@@ -16,8 +16,8 @@ class VideoWriter: NSObject {
     private var completionBlock: MovieMakerCompletion?
     private var movieMakerUIImageExtractor: MovieMakerUIImageExtractor?
 
-    static func videoSettings(codec: String, width: Int, height: Int) ->  [String: Any] {
-        if(Int(width) % 16 != 0) {
+    static func videoSettings(codec: String, width: Int, height: Int) -> [String: Any] {
+        if Int(width) % 16 != 0 {
             print("warning: video settings width must be divisible by 16")
         }
 
@@ -33,7 +33,7 @@ class VideoWriter: NSObject {
 
         let paths = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true)
         let tempPath = paths[0] + "/exprotvideo.mp4"
-        if(FileManager.default.fileExists(atPath: tempPath)) {
+        if FileManager.default.fileExists(atPath: tempPath) {
             guard (try? FileManager.default.removeItem(atPath: tempPath)) != nil else {
                 print("remove path failed")
                 return
@@ -54,15 +54,20 @@ class VideoWriter: NSObject {
     }
 
     func createMovieFrom(images: [UIImage], withCompletion: @escaping MovieMakerCompletion) {
-        self.createMovieFromSource(images: images, extractor: {(inputObject: AnyObject) ->  UIImage? in
-            return inputObject as? UIImage}, withCompletion: withCompletion)
+        self.createMovieFromSource(
+            images: images,
+            extractor: {(inputObject: AnyObject) -> UIImage? in
+            return inputObject as? UIImage}, withCompletion: withCompletion
+        )
     }
 }
 private extension VideoWriter {
-    private func mergeVideoAndAudio(videoUrl: URL,
-                                    audioUrl: URL,
-                                    shouldFlipHorizontally: Bool = false,
-                                    completion: @escaping (_ error: Error?, _ url: URL?) ->  Void) {
+    private func mergeVideoAndAudio(
+        videoUrl: URL,
+        audioUrl: URL,
+        shouldFlipHorizontally: Bool = false,
+        completion: @escaping (_ error: Error?, _ url: URL?) ->  Void
+    ) {
 
         let mixComposition = AVMutableComposition()
         var mutableCompositionVideoTrack = [AVMutableCompositionTrack]()
@@ -74,14 +79,20 @@ private extension VideoWriter {
         let aVideoAsset = AVAsset(url: videoUrl)
         let aAudioAsset = AVAsset(url: audioUrl)
 
-        let compositionAddVideo = mixComposition.addMutableTrack(withMediaType: AVMediaType.video,
-                                                                 preferredTrackID: kCMPersistentTrackID_Invalid)
+        let compositionAddVideo = mixComposition.addMutableTrack(
+            withMediaType: AVMediaType.video,
+            preferredTrackID: kCMPersistentTrackID_Invalid
+        )
 
-        let compositionAddAudio = mixComposition.addMutableTrack(withMediaType: AVMediaType.audio,
-                                                                 preferredTrackID: kCMPersistentTrackID_Invalid)
+        let compositionAddAudio = mixComposition.addMutableTrack(
+            withMediaType: AVMediaType.audio,
+            preferredTrackID: kCMPersistentTrackID_Invalid
+        )
 
-        let compositionAddAudioOfVideo = mixComposition.addMutableTrack(withMediaType: AVMediaType.audio,
-                                                                        preferredTrackID: kCMPersistentTrackID_Invalid)
+        let compositionAddAudioOfVideo = mixComposition.addMutableTrack(
+            withMediaType: AVMediaType.audio,
+            preferredTrackID: kCMPersistentTrackID_Invalid
+        )
 
         let aVideoAssetTrack: AVAssetTrack = aVideoAsset.tracks(withMediaType: AVMediaType.video)[0]
         let aAudioOfVideoAssetTrack: AVAssetTrack? = aVideoAsset.tracks(withMediaType: AVMediaType.audio).first
@@ -103,36 +114,54 @@ private extension VideoWriter {
         mutableCompositionAudioOfVideoTrack.append(compositionAddAudioOfVideo!)
 
         do {
-            try mutableCompositionVideoTrack[0].insertTimeRange(CMTimeRangeMake(start: CMTime.zero,
-                                                                                duration: aVideoAssetTrack.timeRange.duration),
-                                                                of: aVideoAssetTrack,
-                                                                at: CMTime.zero)
+            try mutableCompositionVideoTrack[0].insertTimeRange(
+                CMTimeRangeMake(
+                    start: CMTime.zero,
+                    duration: aVideoAssetTrack.timeRange.duration
+                ),
+                of: aVideoAssetTrack,
+                at: CMTime.zero
+            )
 
             //In my case my audio file is longer then video file so i took videoAsset duration
             //instead of audioAsset duration
-            try mutableCompositionAudioTrack[0].insertTimeRange(CMTimeRangeMake(start: CMTime.zero,
-                                                                                duration: aVideoAssetTrack.timeRange.duration),
-                                                                of: aAudioAssetTrack,
-                                                                at: CMTime.zero)
+            try mutableCompositionAudioTrack[0].insertTimeRange(
+                CMTimeRangeMake(
+                    start: CMTime.zero,
+                    duration: aVideoAssetTrack.timeRange.duration
+                ),
+                of: aAudioAssetTrack,
+                at: CMTime.zero
+            )
 
             // adding audio (of the video if exists) asset to the final composition
             if let aAudioOfVideoAssetTrack = aAudioOfVideoAssetTrack {
-                try mutableCompositionAudioOfVideoTrack[0].insertTimeRange(CMTimeRangeMake(start: CMTime.zero,
-                                                                                           duration: aVideoAssetTrack.timeRange.duration),
-                                                                           of: aAudioOfVideoAssetTrack,
-                                                                           at: CMTime.zero)
+                try mutableCompositionAudioOfVideoTrack[0].insertTimeRange(
+                    CMTimeRangeMake(
+                        start: CMTime.zero,
+                        duration: aVideoAssetTrack.timeRange.duration
+                    ),
+                    of: aAudioOfVideoAssetTrack,
+                    at: CMTime.zero
+                )
             }
         } catch {
             print(error.localizedDescription)
         }
 
         // Exporting
-        let savePathUrl: URL = URL(fileURLWithPath: NSHomeDirectory() + "/Documents/newVideo.mp4")
+        let savePathUrl = URL(fileURLWithPath: NSHomeDirectory() + "/Documents/newVideo.mp4")
         do { // delete old video
             try FileManager.default.removeItem(at: savePathUrl)
-        } catch { print(error.localizedDescription) }
+        } catch {
+            print(error.localizedDescription)
+        }
 
-        let assetExport: AVAssetExportSession = AVAssetExportSession(asset: mixComposition, presetName: AVAssetExportPresetHighestQuality)!
+        let assetExport: AVAssetExportSession = AVAssetExportSession(
+            asset: mixComposition,
+            presetName: AVAssetExportPresetHighestQuality
+        )!
+
         assetExport.outputFileType = AVFileType.mp4
         assetExport.outputURL = savePathUrl
         assetExport.shouldOptimizeForNetworkUse = true
@@ -157,18 +186,34 @@ private extension VideoWriter {
     }
 
     func newPixelBufferFrom(cgImage: CGImage) ->  CVPixelBuffer?{
-        let options: [String: Any] = [kCVPixelBufferCGImageCompatibilityKey as String: true, kCVPixelBufferCGBitmapContextCompatibilityKey as String: true]
+        let options: [String: Any] = [
+            kCVPixelBufferCGImageCompatibilityKey as String: true,
+            kCVPixelBufferCGBitmapContextCompatibilityKey as String: true
+        ]
         var pxbuffer: CVPixelBuffer?
         let frameWidth = self.videoSettings[AVVideoWidthKey] as! Int
         let frameHeight = self.videoSettings[AVVideoHeightKey] as! Int
 
-        let status = CVPixelBufferCreate(kCFAllocatorDefault, frameWidth, frameHeight, kCVPixelFormatType_32ARGB, options as CFDictionary?, &pxbuffer)
+        let status = CVPixelBufferCreate(
+            kCFAllocatorDefault, frameWidth,
+            frameHeight, kCVPixelFormatType_32ARGB,
+            options as CFDictionary?,
+            &pxbuffer
+        )
         assert(status == kCVReturnSuccess && pxbuffer != nil, "newPixelBuffer failed")
 
         CVPixelBufferLockBaseAddress(pxbuffer!, CVPixelBufferLockFlags(rawValue: 0))
         let pxdata = CVPixelBufferGetBaseAddress(pxbuffer!)
         let rgbColorSpace = CGColorSpaceCreateDeviceRGB()
-        let context = CGContext(data: pxdata, width: frameWidth, height: frameHeight, bitsPerComponent: 8, bytesPerRow: CVPixelBufferGetBytesPerRow(pxbuffer!), space: rgbColorSpace, bitmapInfo: CGImageAlphaInfo.noneSkipFirst.rawValue)
+        let context = CGContext(
+            data: pxdata,
+            width: frameWidth,
+            height: frameHeight,
+            bitsPerComponent: 8,
+            bytesPerRow: CVPixelBufferGetBytesPerRow(pxbuffer!),
+            space: rgbColorSpace,
+            bitmapInfo: CGImageAlphaInfo.noneSkipFirst.rawValue
+        )
         assert(context != nil, "context is nil")
 
         context!.concatenate(CGAffineTransform.identity)
@@ -178,11 +223,19 @@ private extension VideoWriter {
     }
 
     func createMovieFrom(urls: [URL], withCompletion: @escaping MovieMakerCompletion) {
-        self.createMovieFromSource(images: urls as [AnyObject], extractor: {(inputObject: AnyObject) -> UIImage? in
-            return UIImage(data: try! Data(contentsOf: inputObject as! URL))}, withCompletion: withCompletion)
+        self.createMovieFromSource(
+            images: urls as [AnyObject],
+            extractor: {(inputObject: AnyObject) -> UIImage? in
+                return UIImage(data: try! Data(contentsOf: inputObject as! URL))},
+            withCompletion: withCompletion
+        )
     }
 
-    func createMovieFromSource(images: [AnyObject], extractor: @escaping MovieMakerUIImageExtractor, withCompletion: @escaping MovieMakerCompletion) {
+    func createMovieFromSource(
+        images: [AnyObject],
+        extractor: @escaping MovieMakerUIImageExtractor,
+        withCompletion: @escaping MovieMakerCompletion
+    ) {
         self.completionBlock = withCompletion
 
         self.assetWriter.startWriting()
@@ -192,12 +245,12 @@ private extension VideoWriter {
         var i = 0
         let frameNumber = images.count
         self.writeInput.requestMediaDataWhenReady(on: mediaInputQueue) {
-            while(true) {
-                if(i >= frameNumber) {
+            while true {
+                if i >= frameNumber {
                     break
                 }
 
-                if (self.writeInput.isReadyForMoreMediaData) {
+                if self.writeInput.isReadyForMoreMediaData {
                     var sampleBuffer: CVPixelBuffer?
                     autoreleasepool{
                         let img = extractor(images[i])
@@ -208,8 +261,8 @@ private extension VideoWriter {
                         }
                         sampleBuffer = self.newPixelBufferFrom(cgImage: img!.cgImage!)
                     }
-                    if (sampleBuffer != nil) {
-                        if(i == 0) {
+                    if sampleBuffer != nil {
+                        if i == 0 {
                             self.bufferAdapter.append(sampleBuffer!, withPresentationTime: CMTime.zero)
                         }else{
                             let value = i - 1
