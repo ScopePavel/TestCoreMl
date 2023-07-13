@@ -2,14 +2,14 @@ import Foundation
 import AVFoundation
 import UIKit
 
-typealias MovieMakerCompletion = (URL) ->  Void
-typealias MovieMakerUIImageExtractor = (AnyObject) ->  UIImage?
+typealias MovieMakerCompletion = (URL) -> Void
+typealias MovieMakerUIImageExtractor = (AnyObject) -> UIImage?
 
 class VideoWriter: NSObject {
     private var assetWriter: AVAssetWriter!
     private var writeInput: AVAssetWriterInput!
     private var bufferAdapter: AVAssetWriterInputPixelBufferAdaptor!
-    private var videoSettings: [String : Any]!
+    private var videoSettings: [String: Any]!
     private var frameTime: CMTime!
     private var fileURL: URL!
 
@@ -21,9 +21,11 @@ class VideoWriter: NSObject {
             print("warning: video settings width must be divisible by 16")
         }
 
-        let videoSettings: [String: Any] = [AVVideoCodecKey: AVVideoCodecType.h264,
-                                           AVVideoWidthKey: width,
-                                          AVVideoHeightKey: height]
+        let videoSettings: [String: Any] = [
+            AVVideoCodecKey: AVVideoCodecType.h264,
+            AVVideoWidthKey: width,
+            AVVideoHeightKey: height
+        ]
 
         return videoSettings
     }
@@ -33,6 +35,7 @@ class VideoWriter: NSObject {
 
         let paths = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true)
         let tempPath = paths[0] + "/exprotvideo.mp4"
+
         if FileManager.default.fileExists(atPath: tempPath) {
             guard (try? FileManager.default.removeItem(atPath: tempPath)) != nil else {
                 print("remove path failed")
@@ -48,8 +51,11 @@ class VideoWriter: NSObject {
         assert(self.assetWriter.canAdd(self.writeInput), "add failed")
 
         self.assetWriter.add(self.writeInput)
-        let bufferAttributes: [String: Any] = [kCVPixelBufferPixelFormatTypeKey as String: Int(kCVPixelFormatType_32ARGB)]
-        self.bufferAdapter = AVAssetWriterInputPixelBufferAdaptor(assetWriterInput: self.writeInput, sourcePixelBufferAttributes: bufferAttributes)
+        let bufferAttributes = [kCVPixelBufferPixelFormatTypeKey as String: Int(kCVPixelFormatType_32ARGB)]
+        self.bufferAdapter = AVAssetWriterInputPixelBufferAdaptor(
+            assetWriterInput: self.writeInput,
+            sourcePixelBufferAttributes: bufferAttributes
+        )
         self.frameTime = CMTimeMake(value: 4, timescale: 1)
     }
 
@@ -66,7 +72,7 @@ private extension VideoWriter {
         videoUrl: URL,
         audioUrl: URL,
         shouldFlipHorizontally: Bool = false,
-        completion: @escaping (_ error: Error?, _ url: URL?) ->  Void
+        completion: @escaping (_ error: Error?, _ url: URL?) -> Void
     ) {
 
         let mixComposition = AVMutableComposition()
@@ -166,7 +172,7 @@ private extension VideoWriter {
         assetExport.outputURL = savePathUrl
         assetExport.shouldOptimizeForNetworkUse = true
 
-        assetExport.exportAsynchronously { () ->  Void in
+        assetExport.exportAsynchronously { () -> Void in
             switch assetExport.status {
             case AVAssetExportSession.Status.completed:
                 print("success")
@@ -185,7 +191,7 @@ private extension VideoWriter {
 
     }
 
-    func newPixelBufferFrom(cgImage: CGImage) ->  CVPixelBuffer?{
+    func newPixelBufferFrom(cgImage: CGImage) -> CVPixelBuffer?{
         let options: [String: Any] = [
             kCVPixelBufferCGImageCompatibilityKey as String: true,
             kCVPixelBufferCGBitmapContextCompatibilityKey as String: true
